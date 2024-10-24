@@ -1,23 +1,25 @@
 package cose457.view;
 
+import cose457.controller.CanvasController;
+import cose457.model.canvas.CanvasState;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class ScreenView extends JFrame {
 
-  public ScreenView() {
+  public ScreenView(CanvasState canvasState) {
     setTitle("Screen View");
     setLayout(new BorderLayout());
 
-    LeftSideBar leftSidebar = new LeftSideBar();
+    CanvasView canvasView = new CanvasView(canvasState);
+    CanvasController controller = new CanvasController(canvasView, canvasState);
+    LeftSideBar leftSidebar = new LeftSideBar(controller);
     RightSideBar rightSidebar = new RightSideBar();
-
-    JPanel canvas = new JPanel();
-    canvas.setBackground(Color.WHITE);
 
     add(leftSidebar, BorderLayout.WEST);
     add(rightSidebar, BorderLayout.EAST);
-    add(canvas, BorderLayout.CENTER);
+    add(canvasView, BorderLayout.CENTER);
 
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(800, 600);

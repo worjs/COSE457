@@ -19,8 +19,8 @@ public abstract class Object {
     this.y2 = y2;
   }
 
-  // Canvas 그리기
-  abstract void draw(Graphics2D g2d);
+  // CanvasState 그리기
+  public abstract void draw(Graphics2D g2d);
 
   // 위치 조절
   public void move(int newX1, int newY1) {
