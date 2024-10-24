@@ -1,6 +1,7 @@
 package cose457.model.object;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 
 public abstract class Object {
 
@@ -17,6 +18,9 @@ public abstract class Object {
     this.y1 = y1;
     this.y2 = y2;
   }
+
+  // Canvas 그리기
+  abstract void draw(Graphics2D g2d);
 
   // 위치 조절
   public void move(int newX1, int newY1) {
