@@ -17,7 +17,7 @@ public class EllipseFactory implements ObjectFactory {
   }
 
   @Override
-  public Object createObject(int x1, int y1, int x2, int y2, Color color) {
-    return new EllipseObject(x1, y1, x2, y2, color);
+  public Object createObject(int x1, int y1, int x2, int y2, int z, Color color) {
+    return new EllipseObject(x1, y1, x2, y2, z, color);
   }
 }

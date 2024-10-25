@@ -7,8 +7,9 @@ import cose457.controller.CanvasController;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 
 public class RightSideBar extends JPanel implements SelectionListener {
@@ -18,6 +19,8 @@ public class RightSideBar extends JPanel implements SelectionListener {
   private Color selectedColor;
   private ObjectSelection selection;
   private CanvasController controller;
+
+  private Object currentObject; // 현재 선택된 객체를 저장
 
   public RightSideBar(CanvasController controller) {
     this.controller = controller;
@@ -55,7 +58,10 @@ public class RightSideBar extends JPanel implements SelectionListener {
             selectedColor = color;
             colorButton.setBackground(selectedColor);
             updateColorCodeLabel();
-            updateSelectedObject();
+            if (currentObject != null) {
+              currentObject.setColor(selectedColor);
+              controller.getView().repaint();
+            }
           }
         });
     add(colorButton);
@@ -73,19 +79,31 @@ public class RightSideBar extends JPanel implements SelectionListener {
   }
 
   private void addFieldListeners() {
-    FocusAdapter focusListener =
-        new FocusAdapter() {
-          @Override
-          public void focusLost(FocusEvent e) {
-            updateSelectedObject();
+    ActionListener fieldListener =
+        e -> {
+          if (currentObject != null) {
+            try {
+              int width = Integer.parseInt(widthField.getText());
+              int height = Integer.parseInt(heightField.getText());
+              int xpos = Integer.parseInt(xposField.getText());
+              int ypos = Integer.parseInt(yposField.getText());
+
+              int x2 = xpos + width;
+              int y2 = ypos + height;
+              currentObject.resize(xpos, ypos, x2, y2);
+              controller.getView().repaint();
+            } catch (NumberFormatException ex) {
+              // 잘못된 입력 처리
+            }
           }
         };
 
-    widthField.addFocusListener(focusListener);
-    heightField.addFocusListener(focusListener);
-    xposField.addFocusListener(focusListener);
-    yposField.addFocusListener(focusListener);
-    zposField.addFocusListener(focusListener);
+    widthField.addActionListener(fieldListener);
+    heightField.addActionListener(fieldListener);
+    xposField.addActionListener(fieldListener);
+    yposField.addActionListener(fieldListener);
+    zposField.addActionListener(fieldListener);
+    // zposField에 대한 처리 필요 시 추가
   }
 
   private JPanel createLabeledFieldWithButtons(String labelText, JTextField field) {
@@ -109,16 +127,8 @@ public class RightSideBar extends JPanel implements SelectionListener {
     incrementButton.setPreferredSize(new Dimension(30, 30));
     decrementButton.setPreferredSize(new Dimension(30, 30));
 
-    incrementButton.addActionListener(
-        e -> {
-          adjustValue(field, 1);
-          updateSelectedObject();
-        });
-    decrementButton.addActionListener(
-        e -> {
-          adjustValue(field, -1);
-          updateSelectedObject();
-        });
+    incrementButton.addActionListener(e -> adjustValue(field, 1));
+    decrementButton.addActionListener(e -> adjustValue(field, -1));
 
     inputPanel.add(field);
     inputPanel.add(incrementButton);
@@ -134,27 +144,34 @@ public class RightSideBar extends JPanel implements SelectionListener {
     try {
       int currentValue = Integer.parseInt(field.getText());
       field.setText(String.valueOf(currentValue + adjustment));
+      if (currentObject != null) {
+        int width = Integer.parseInt(widthField.getText());
+        int height = Integer.parseInt(heightField.getText());
+        int xpos = Integer.parseInt(xposField.getText());
+        int ypos = Integer.parseInt(yposField.getText());
+        int zpos = Integer.parseInt(zposField.getText());
+
+        int x2 = xpos + width;
+        int y2 = ypos + height;
+        currentObject.resize(xpos, ypos, x2, y2);
+        currentObject.setZ(zpos); // z값 업데이트
+        controller.getView().repaint();
+      }
     } catch (NumberFormatException e) {
-      // Handle invalid input
+      // 잘못된 입력 처리
     }
   }
 
-  public void updateFields(
-      boolean shapeSelected, int width, int height, int xpos, int ypos, int zpos, Color color) {
-    if (shapeSelected) {
-      widthField.setText(String.valueOf(width));
-      heightField.setText(String.valueOf(height));
-      xposField.setText(String.valueOf(xpos));
-      yposField.setText(String.valueOf(ypos));
-      zposField.setText(String.valueOf(zpos));
-      selectedColor = color;
-      colorButton.setBackground(color);
-      updateColorCodeLabel();
-      enableFields(true);
-    } else {
-      clearFields();
-      enableFields(false);
-    }
+  public void updateFields(Object obj) {
+    widthField.setText(String.valueOf(obj.getWidth()));
+    heightField.setText(String.valueOf(obj.getHeight()));
+    xposField.setText(String.valueOf(obj.getX1()));
+    yposField.setText(String.valueOf(obj.getY1()));
+    zposField.setText(String.valueOf(obj.getZ()));
+    selectedColor = obj.getColor();
+    colorButton.setBackground(selectedColor);
+    updateColorCodeLabel();
+    enableFields(true);
   }
 
   private void clearFields() {
@@ -182,7 +199,6 @@ public class RightSideBar extends JPanel implements SelectionListener {
         String.format(
             "#%02X%02X%02X",
             selectedColor.getRed(), selectedColor.getGreen(), selectedColor.getBlue());
-
     colorCodeLabel.setText(hexCode);
     colorCodeLabel.setBackground(selectedColor);
 
@@ -198,43 +214,29 @@ public class RightSideBar extends JPanel implements SelectionListener {
   public void selectionChanged() {
     List<Object> selectedObjects = selection.getSelectedObjects();
     if (selectedObjects.size() == 1) {
-      Object obj = selectedObjects.get(0);
-      int width = obj.getWidth();
-      int height = obj.getHeight();
-      int xpos = obj.getX1();
-      int ypos = obj.getY1();
-      int zpos = 0; // Assuming zpos is managed elsewhere
-      Color color = obj.getColor();
-      updateFields(true, width, height, xpos, ypos, zpos, color);
+      if (currentObject != null) {
+        currentObject.removePropertyChangeListener(objectPropertyListener);
+      }
+      currentObject = selectedObjects.get(0);
+      currentObject.addPropertyChangeListener(objectPropertyListener);
+      updateFields(currentObject);
     } else {
+      if (currentObject != null) {
+        currentObject.removePropertyChangeListener(objectPropertyListener);
+        currentObject = null;
+      }
       clearFields();
       enableFields(false);
     }
   }
 
-  private void updateSelectedObject() {
-    List<Object> selectedObjects = selection.getSelectedObjects();
-    if (selectedObjects.size() == 1) {
-      Object obj = selectedObjects.get(0);
-      try {
-        int width = Integer.parseInt(widthField.getText());
-        int height = Integer.parseInt(heightField.getText());
-        int xpos = Integer.parseInt(xposField.getText());
-        int ypos = Integer.parseInt(yposField.getText());
-        // Handle zpos if necessary
-
-        int x2 = xpos + width;
-        int y2 = ypos + height;
-        obj.resize(xpos, ypos, x2, y2);
-
-        if (selectedColor != null) {
-          obj.setColor(selectedColor);
+  private PropertyChangeListener objectPropertyListener =
+      new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (currentObject != null) {
+            SwingUtilities.invokeLater(() -> updateFields(currentObject));
+          }
         }
-
-        controller.getView().repaint();
-      } catch (NumberFormatException e) {
-        // Handle invalid input
-      }
-    }
-  }
+      };
 }

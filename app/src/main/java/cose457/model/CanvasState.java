@@ -4,16 +4,26 @@ import cose457.model.object.Object;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CanvasState {
-  public CanvasState() {}
 
-  @Getter private ArrayList<Object> objectList = new ArrayList<>();
-
-  private ObjectSelection selection;
+  private final List<Object> objectList = new ArrayList<>();
 
   public ObjectSelection getSelections() {
     return ObjectSelection.getInstance();
+  }
+
+  public List<Object> getObjectList() {
+    return objectList.stream()
+        .sorted(Comparator.comparingInt(Object::getZ))
+        .collect(Collectors.toList());
+  }
+
+  public int getNextZ() {
+    return objectList.stream().mapToInt(Object::getZ).max().orElse(0) + 1;
   }
 
   public void addObjects(Object object) {

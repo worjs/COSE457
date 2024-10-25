@@ -11,8 +11,8 @@ public class TextObject extends Object {
 
   @Setter private String text;
 
-  public TextObject(int x1, int y1, int x2, int y2, Color color, String text) {
-    super(x1, y1, x2, y2, color);
+  public TextObject(int x1, int y1, int x2, int y2, int z, Color color, String text) {
+    super(x1, y1, x2, y2, z, color);
     this.text = text;
   }
 
