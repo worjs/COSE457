@@ -7,20 +7,17 @@ import cose457.model.factory.interfaces.ObjectFactory;
 import cose457.model.object.EllipseObject;
 
 public class EllipseFactory implements ObjectFactory {
-	private EllipseFactory() {
-	}
+  private static EllipseFactory instance;
 
-	private static EllipseFactory instance;
+  public static EllipseFactory getInstance() {
+    if (instance == null) {
+      instance = new EllipseFactory();
+    }
+    return instance;
+  }
 
-	public static EllipseFactory getInstance() {
-		if (instance == null) {
-			instance = new EllipseFactory();
-		}
-		return instance;
-	}
-
-	@Override
-	public Object createObject(int x1, int y1, int x2, int y2, Color color) {
-		return new EllipseObject(x1, y1, x2, y2, color);
-	}
+  @Override
+  public Object createObject(int x1, int y1, int x2, int y2, Color color) {
+    return new EllipseObject(x1, y1, x2, y2, color);
+  }
 }

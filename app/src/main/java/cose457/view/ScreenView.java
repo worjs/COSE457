@@ -1,7 +1,7 @@
 package cose457.view;
 
 import cose457.controller.CanvasController;
-import cose457.model.canvas.CanvasState;
+import cose457.model.CanvasState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +15,7 @@ public class ScreenView extends JFrame {
     CanvasView canvasView = new CanvasView(canvasState);
     CanvasController controller = new CanvasController(canvasView, canvasState);
     LeftSideBar leftSidebar = new LeftSideBar(controller);
-    RightSideBar rightSidebar = new RightSideBar();
+    RightSideBar rightSidebar = new RightSideBar(controller);
 
     add(leftSidebar, BorderLayout.WEST);
     add(rightSidebar, BorderLayout.EAST);

@@ -1,16 +1,28 @@
 package cose457.view;
 
+import cose457.model.SelectionListener;
+import cose457.model.ObjectSelection;
+import cose457.model.object.Object;
+import cose457.controller.CanvasController;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.util.List;
 
-public class RightSideBar extends JPanel {
-
+public class RightSideBar extends JPanel implements SelectionListener {
   private JTextField widthField, heightField, xposField, yposField, zposField;
   private JButton colorButton;
   private JLabel colorCodeLabel;
   private Color selectedColor;
+  private ObjectSelection selection;
+  private CanvasController controller;
 
-  public RightSideBar() {
+  public RightSideBar(CanvasController controller) {
+    this.controller = controller;
+    selection = ObjectSelection.getInstance();
+    selection.addSelectionListener(this);
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setPreferredSize(new Dimension(200, getHeight()));
@@ -43,6 +55,7 @@ public class RightSideBar extends JPanel {
             selectedColor = color;
             colorButton.setBackground(selectedColor);
             updateColorCodeLabel();
+            updateSelectedObject();
           }
         });
     add(colorButton);
@@ -54,7 +67,25 @@ public class RightSideBar extends JPanel {
     add(colorCodeLabel);
 
     clearFields();
-    enableFields(true);
+    enableFields(false);
+
+    addFieldListeners();
+  }
+
+  private void addFieldListeners() {
+    FocusAdapter focusListener =
+        new FocusAdapter() {
+          @Override
+          public void focusLost(FocusEvent e) {
+            updateSelectedObject();
+          }
+        };
+
+    widthField.addFocusListener(focusListener);
+    heightField.addFocusListener(focusListener);
+    xposField.addFocusListener(focusListener);
+    yposField.addFocusListener(focusListener);
+    zposField.addFocusListener(focusListener);
   }
 
   private JPanel createLabeledFieldWithButtons(String labelText, JTextField field) {
@@ -78,8 +109,16 @@ public class RightSideBar extends JPanel {
     incrementButton.setPreferredSize(new Dimension(30, 30));
     decrementButton.setPreferredSize(new Dimension(30, 30));
 
-    incrementButton.addActionListener(e -> adjustValue(field, 1));
-    decrementButton.addActionListener(e -> adjustValue(field, -1));
+    incrementButton.addActionListener(
+        e -> {
+          adjustValue(field, 1);
+          updateSelectedObject();
+        });
+    decrementButton.addActionListener(
+        e -> {
+          adjustValue(field, -1);
+          updateSelectedObject();
+        });
 
     inputPanel.add(field);
     inputPanel.add(incrementButton);
@@ -96,7 +135,7 @@ public class RightSideBar extends JPanel {
       int currentValue = Integer.parseInt(field.getText());
       field.setText(String.valueOf(currentValue + adjustment));
     } catch (NumberFormatException e) {
-
+      // Handle invalid input
     }
   }
 
@@ -110,7 +149,7 @@ public class RightSideBar extends JPanel {
       zposField.setText(String.valueOf(zpos));
       selectedColor = color;
       colorButton.setBackground(color);
-      updateColorCodeLabel(); // 색상 코드 업데이트
+      updateColorCodeLabel();
       enableFields(true);
     } else {
       clearFields();
@@ -145,7 +184,6 @@ public class RightSideBar extends JPanel {
             selectedColor.getRed(), selectedColor.getGreen(), selectedColor.getBlue());
 
     colorCodeLabel.setText(hexCode);
-
     colorCodeLabel.setBackground(selectedColor);
 
     int brightness =
@@ -154,5 +192,49 @@ public class RightSideBar extends JPanel {
                 + selectedColor.getBlue() * 114)
             / 1000;
     colorCodeLabel.setForeground(brightness > 125 ? Color.BLACK : Color.WHITE);
+  }
+
+  @Override
+  public void selectionChanged() {
+    List<Object> selectedObjects = selection.getSelectedObjects();
+    if (selectedObjects.size() == 1) {
+      Object obj = selectedObjects.get(0);
+      int width = obj.getWidth();
+      int height = obj.getHeight();
+      int xpos = obj.getX1();
+      int ypos = obj.getY1();
+      int zpos = 0; // Assuming zpos is managed elsewhere
+      Color color = obj.getColor();
+      updateFields(true, width, height, xpos, ypos, zpos, color);
+    } else {
+      clearFields();
+      enableFields(false);
+    }
+  }
+
+  private void updateSelectedObject() {
+    List<Object> selectedObjects = selection.getSelectedObjects();
+    if (selectedObjects.size() == 1) {
+      Object obj = selectedObjects.get(0);
+      try {
+        int width = Integer.parseInt(widthField.getText());
+        int height = Integer.parseInt(heightField.getText());
+        int xpos = Integer.parseInt(xposField.getText());
+        int ypos = Integer.parseInt(yposField.getText());
+        // Handle zpos if necessary
+
+        int x2 = xpos + width;
+        int y2 = ypos + height;
+        obj.resize(xpos, ypos, x2, y2);
+
+        if (selectedColor != null) {
+          obj.setColor(selectedColor);
+        }
+
+        controller.getView().repaint();
+      } catch (NumberFormatException e) {
+        // Handle invalid input
+      }
+    }
   }
 }

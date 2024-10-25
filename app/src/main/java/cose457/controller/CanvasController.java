@@ -1,25 +1,34 @@
 package cose457.controller;
 
-import cose457.model.canvas.CanvasState;
-import cose457.model.object.RectangleObject;
+import cose457.model.CanvasState;
+import cose457.model.ObjectSelection;
+import cose457.model.factory.interfaces.ObjectFactory;
+import cose457.model.object.Object;
 import cose457.view.CanvasView;
 
 import java.awt.*;
 
 public class CanvasController {
-  private CanvasView view;
-  private CanvasState stage;
+  private final CanvasView view;
+  private final CanvasState state;
 
-  public CanvasController(CanvasView view, CanvasState stage) {
+  public CanvasController(CanvasView view, CanvasState state) {
     this.view = view;
-    this.stage = stage;
+    this.state = state;
   }
 
-  public void addObjects() {
-    {
-      RectangleObject rect = new RectangleObject(100, 100, 300, 200, Color.RED);
-      stage.addObjects(rect); // CanvasState에 직사각형 추가
-      view.repaint(); // 캔버스 다시 그리기 요청
-    }
+  public void addObjects(ObjectFactory factory) {
+    Object obj = factory.createObject(100, 100, 300, 200, Color.RED);
+    this.getSelection().selectObject(obj);
+    state.addObjects(obj);
+    view.repaint();
+  }
+
+  public ObjectSelection getSelection() {
+    return state.getSelections();
+  }
+
+  public CanvasView getView() {
+    return view;
   }
 }
