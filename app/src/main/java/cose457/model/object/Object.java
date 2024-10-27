@@ -1,26 +1,25 @@
 package cose457.model.object;
 
-import cose457.model.Handle;
-import cose457.model.HandleType;
-import cose457.model.ObjectSelection;
-import lombok.Getter;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 
+import cose457.model.canvas.Handle;
+import cose457.model.canvas.HandleType;
+import cose457.model.canvas.ObjectSelection;
+import lombok.Getter;
+
 @Getter
 public abstract class Object {
+
+  private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
   protected int x1, y1, x2, y2, z;
   protected Color color;
   protected double rotationAngle = 0.0;
   private List<Handle> handles;
-
-  private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
   protected Object(int x1, int y1, int x2, int y2, int z, Color color) {
     this.color = color;

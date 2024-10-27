@@ -1,4 +1,4 @@
-package cose457.model;
+package cose457.model.canvas;
 
 import cose457.model.object.Object;
 import java.util.ArrayList;

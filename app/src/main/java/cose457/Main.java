@@ -1,6 +1,6 @@
 package cose457;
 
-import cose457.model.CanvasState;
+import cose457.model.canvas.CanvasState;
 import cose457.view.ScreenView;
 
 public class Main {

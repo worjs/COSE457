@@ -1,7 +1,7 @@
 package cose457.view;
 
 import cose457.controller.CanvasController;
-import cose457.model.CanvasState;
+import cose457.model.canvas.CanvasState;
 
 import javax.swing.*;
 import java.awt.*;

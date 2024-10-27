@@ -1,4 +1,4 @@
-package cose457.model;
+package cose457.model.canvas;
 
 public enum HandleType {
   TOP_LEFT,

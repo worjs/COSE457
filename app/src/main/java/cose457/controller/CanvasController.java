@@ -1,7 +1,7 @@
 package cose457.controller;
 
-import cose457.model.CanvasState;
-import cose457.model.ObjectSelection;
+import cose457.model.canvas.CanvasState;
+import cose457.model.canvas.ObjectSelection;
 import cose457.model.factory.interfaces.ObjectFactory;
 import cose457.model.object.Object;
 import cose457.view.CanvasView;
