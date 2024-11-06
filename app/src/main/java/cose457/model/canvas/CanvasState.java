@@ -1,7 +1,6 @@
 package cose457.model.canvas;
 
 import cose457.model.object.DrawbleObject;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,11 +24,11 @@ public class CanvasState {
     return objectList.stream().mapToInt(DrawbleObject::getZ).max().orElse(0) + 1;
   }
 
-  public void addObjects(DrawbleObject object) {
+  public void addObject(DrawbleObject object) {
     objectList.add(object);
   }
 
-  public void removeObjects(DrawbleObject object) {
+  public void removeObject(DrawbleObject object) {
     objectList.remove(object);
   }
 }

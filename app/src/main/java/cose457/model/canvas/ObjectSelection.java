@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectSelection {
+
   private static ObjectSelection instance;
   private ArrayList<DrawbleObject> selectedObjects = new ArrayList<>();
   private List<SelectionListener> listeners = new ArrayList<>();
@@ -16,13 +17,13 @@ public class ObjectSelection {
     return instance;
   }
 
-  public void selectObject(DrawbleObject object) {
-    selectedObjects.add(object);
+  public void selectObjects(List<DrawbleObject> object) {
+    selectedObjects.addAll(object);
     notifySelectionChanged();
   }
 
-  public void unselectObject(DrawbleObject object) {
-    selectedObjects.remove(object);
+  public void unselectObjects(List<DrawbleObject> object) {
+    selectedObjects.removeAll(object);
     notifySelectionChanged();
   }
 

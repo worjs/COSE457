@@ -2,9 +2,8 @@ package cose457.view;
 
 import cose457.controller.CanvasController;
 import cose457.model.canvas.CanvasState;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import javax.swing.JFrame;
 
 public class ScreenView extends JFrame {
 

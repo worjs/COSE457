@@ -1,12 +1,24 @@
 package cose457.view;
 
 import cose457.controller.CanvasController;
-import cose457.model.factory.*;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
+import cose457.model.factory.EllipseFactory;
+import cose457.model.factory.ImageFactory;
+import cose457.model.factory.LineFactory;
+import cose457.model.factory.RectangleFactory;
+import cose457.model.factory.TextFactory;
+import cose457.model.factory.interfaces.ObjectFactory;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionListener;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class LeftSideBar extends JPanel {
 
@@ -16,14 +28,10 @@ public class LeftSideBar extends JPanel {
   public LeftSideBar(CanvasController controller) {
     setLayout(new GridLayout(5, 1, 0, 0));
 
-    add(createIconButton("line_icon.png", e -> controller.addObjects(LineFactory.getInstance())));
-    add(
-        createIconButton(
-            "rectangle_icon.png", e -> controller.addObjects(RectangleFactory.getInstance())));
-    add(
-        createIconButton(
-            "ellipse_icon.png", e -> controller.addObjects(EllipseFactory.getInstance())));
-    add(createIconButton("text_icon.png", e -> controller.addObjects(TextFactory.getInstance())));
+    add(createIconButton("line_icon.png", e -> controller.drawObject(LineFactory.getInstance())));
+    add(createIconButton("rectangle_icon.png", e -> controller.drawObject(RectangleFactory.getInstance())));
+    add(createIconButton("ellipse_icon.png", e -> controller.drawObject(EllipseFactory.getInstance())));
+    add(createIconButton("text_icon.png", e -> controller.drawObject(TextFactory.getInstance())));
     add(createIconButton("image_icon.png", e -> handleImageSelection(controller)));
 
     setPreferredSize(new Dimension(100, 250));
@@ -43,14 +51,19 @@ public class LeftSideBar extends JPanel {
   private void handleImageSelection(CanvasController controller) {
     JFileChooser fileChooser = new JFileChooser();
 
-    FileNameExtensionFilter imageFilter =
-        new FileNameExtensionFilter("Image files", "jpg", "jpeg", "png", "gif");
+    FileNameExtensionFilter imageFilter = new FileNameExtensionFilter("Image files", "jpg", "jpeg", "png", "gif");
     fileChooser.setFileFilter(imageFilter);
 
     int result = fileChooser.showOpenDialog(null);
     if (result == JFileChooser.APPROVE_OPTION) {
       ImageIcon imageIcon = new ImageIcon(fileChooser.getSelectedFile().getAbsolutePath());
-      controller.addObjects(ImageFactory.getInstance(imageIcon.getImage()));
+      Image image = imageIcon.getImage();
+
+      // Create ImageFactory instance with selected image
+      ObjectFactory imageFactory = ImageFactory.getInstance(image);
+
+      // Delegate drawing action to controller
+      controller.drawObject(imageFactory);
     }
   }
 }

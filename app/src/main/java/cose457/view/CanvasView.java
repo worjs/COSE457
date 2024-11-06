@@ -1,19 +1,31 @@
 package cose457.view;
 
+import cose457.controller.command.CommandInvoker;
+import cose457.controller.command.MoveCommand;
+import cose457.controller.command.ResizeCommand;
+import cose457.controller.command.SelectCommand;
 import cose457.model.canvas.CanvasState;
 import cose457.model.canvas.Handle;
 import cose457.model.object.DrawbleObject;
-import lombok.Getter;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.swing.JPanel;
+import lombok.Getter;
 
+@Getter
 public class CanvasView extends JPanel {
+
   private final CanvasState state;
   private final DragState dragState;
 
@@ -30,7 +42,7 @@ public class CanvasView extends JPanel {
 
           @Override
           public void mouseReleased(MouseEvent e) {
-            dragState.reset();
+            handleMouseReleased(e);
           }
         });
 
@@ -47,29 +59,32 @@ public class CanvasView extends JPanel {
     int x = e.getX();
     int y = e.getY();
 
-    // 1. 선택된 객체들의 핸들을 검사하여 핸들을 클릭했는지 확인합니다.
+    // Check if a handle was clicked on a selected object
     if (selectHandleIfClicked(x, y)) {
       return;
     }
 
-    // 2. 선택된 객체 자체를 클릭했는지 확인합니다.
+    // Check if a selected object was clicked
     if (selectObjectIfClicked(x, y)) {
-      // 객체 드래그를 시작합니다.
+      // Start dragging the selected objects
       List<DrawbleObject> selectedObjects = state.getSelections().getSelectedObjects();
       dragState.startObjectDrag(e.getPoint(), selectedObjects);
       return;
     }
 
-    // 3. 객체를 클릭하지 않았다면, 객체 선택 로직을 처리합니다.
+    // If no object was clicked, handle object selection logic
     if (!selectObjectAtPoint(x, y, e.isShiftDown())) {
-      // 빈 공간을 클릭한 경우 선택을 해제합니다.
-      state.getSelections().clearObjects();
+      // If clicked on empty space, clear selection
+      if (!e.isShiftDown()) {
+        CommandInvoker.getInstance().executeCommand(
+            new SelectCommand(this, state.getSelections().getSelectedObjects(), false));
+      }
     }
     repaint();
   }
 
   private boolean selectHandleIfClicked(int x, int y) {
-    // 다중 선택 상태인 경우 핸들 드래그 비활성화
+    // Disable handle drag when multiple objects are selected
     if (state.getSelections().getSelectedObjects().size() > 1) {
       return false;
     }
@@ -78,7 +93,7 @@ public class CanvasView extends JPanel {
       if (obj.isSelected()) {
         Handle handle = obj.getClickedHandle(x, y);
         if (handle != null) {
-          dragState.startHandleDrag(handle);
+          dragState.startHandleDrag(handle, obj);
           return true;
         }
       }
@@ -108,51 +123,35 @@ public class CanvasView extends JPanel {
           objectsAtPoint.stream().max(Comparator.comparingInt(DrawbleObject::getZ)).get();
 
       if (isShiftDown) {
-        toggleObjectSelection(topMostObject);
+        // Toggle selection
+        List<DrawbleObject> objs = Arrays.asList(topMostObject);
+        CommandInvoker.getInstance().executeCommand(
+            new SelectCommand(this, objs, !topMostObject.isSelected()));
       } else {
-        state.getSelections().clearObjects();
-        state.getSelections().selectObject(topMostObject);
+        // Clear previous selection and select the new object
+        List<DrawbleObject> previousSelection = new ArrayList<>(state.getSelections().getSelectedObjects());
+        if (!previousSelection.isEmpty()) {
+          CommandInvoker.getInstance().executeCommand(
+              new SelectCommand(this, previousSelection, false));
+        }
+        CommandInvoker.getInstance().executeCommand(
+            new SelectCommand(this, Arrays.asList(topMostObject), true));
       }
       return true;
     }
     return false;
   }
 
-  private void toggleObjectSelection(DrawbleObject obj) {
-    if (obj.isSelected()) {
-      state.getSelections().unselectObject(obj);
-    } else {
-      state.getSelections().selectObject(obj);
-    }
-  }
-
   private void handleMouseDragged(MouseEvent e) {
     if (dragState.isDragging()) {
       switch (dragState.getDragType()) {
         case HANDLE:
-          // 핸들 드래그 처리
-          for (DrawbleObject obj : state.getObjectList()) {
-            if (obj.isSelected()) {
-              obj.resizeOrRotate(dragState.getActiveHandle(), e.getX(), e.getY());
-            }
-          }
+          // Handle drag
+          dragState.updateHandleDrag(e.getX(), e.getY());
           break;
         case OBJECT:
-          // 객체 드래그 처리
-          int deltaX = e.getX() - dragState.getInitialMousePoint().x;
-          int deltaY = e.getY() - dragState.getInitialMousePoint().y;
-
-          for (DrawbleObject obj : state.getSelections().getSelectedObjects()) {
-            Point initialPosition = dragState.getInitialObjectPositions().get(obj);
-            if (initialPosition != null) {
-              int newX1 = initialPosition.x + deltaX;
-              int newY1 = initialPosition.y + deltaY;
-              int newX2 = newX1 + obj.getWidth();
-              int newY2 = newY1 + obj.getHeight();
-
-              obj.resize(newX1, newY1, newX2, newY2);
-            }
-          }
+          // Object drag
+          dragState.updateObjectDrag(e.getPoint());
           break;
         default:
           break;
@@ -161,10 +160,38 @@ public class CanvasView extends JPanel {
     }
   }
 
+  private void handleMouseReleased(MouseEvent e) {
+    if (dragState.isDragging()) {
+      switch (dragState.getDragType()) {
+        case HANDLE:
+          // Execute ResizeCommand
+          Map<DrawbleObject, Rectangle> newBounds = new HashMap<>();
+          newBounds.put(dragState.getActiveObject(), dragState.getActiveObject().getBounds());
+          ResizeCommand resizeCommand = new ResizeCommand(this, Arrays.asList(dragState.getActiveObject()), newBounds);
+          CommandInvoker.getInstance().executeCommand(resizeCommand);
+          break;
+        case OBJECT:
+          // Execute MoveCommand
+          int deltaX = e.getX() - dragState.getInitialMousePoint().x;
+          int deltaY = e.getY() - dragState.getInitialMousePoint().y;
+          MoveCommand moveCommand = new MoveCommand(this,
+              new ArrayList<>(dragState.getInitialObjectPositions().keySet()), deltaX, deltaY);
+          CommandInvoker.getInstance().executeCommand(moveCommand);
+          break;
+        default:
+          break;
+      }
+      dragState.reset();
+    }
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    for (DrawbleObject obj : state.getObjectList()) {
+    // Sort objects by z-index before drawing
+    List<DrawbleObject> sortedObjects = new ArrayList<>(state.getObjectList());
+    sortedObjects.sort(Comparator.comparingInt(DrawbleObject::getZ));
+    for (DrawbleObject obj : sortedObjects) {
       obj.draw((Graphics2D) g);
       if (obj.isSelected()) {
         obj.drawHandles((Graphics2D) g);
@@ -172,16 +199,32 @@ public class CanvasView extends JPanel {
     }
   }
 
+  private enum DragType {
+    HANDLE,
+    OBJECT,
+    NONE
+  }
+
   @Getter
   private static class DragState {
+
     private DragType dragType = DragType.NONE;
     private Handle activeHandle = null;
+    private DrawbleObject activeObject = null;
     private Point initialMousePoint = null;
     private Map<DrawbleObject, Point> initialObjectPositions = new HashMap<>();
 
-    public void startHandleDrag(Handle handle) {
+    public void startHandleDrag(Handle handle, DrawbleObject obj) {
       this.dragType = DragType.HANDLE;
       this.activeHandle = handle;
+      this.activeObject = obj;
+      // Store initial bounds if needed for undo functionality
+    }
+
+    public void updateHandleDrag(int x, int y) {
+      if (activeObject != null && activeHandle != null) {
+        activeObject.resizeOrRotate(activeHandle, x, y);
+      }
     }
 
     public void startObjectDrag(Point initialPoint, List<DrawbleObject> selectedObjects) {
@@ -192,9 +235,25 @@ public class CanvasView extends JPanel {
       }
     }
 
+    public void updateObjectDrag(Point currentPoint) {
+      int deltaX = currentPoint.x - initialMousePoint.x;
+      int deltaY = currentPoint.y - initialMousePoint.y;
+
+      for (DrawbleObject obj : initialObjectPositions.keySet()) {
+        Point initialPosition = initialObjectPositions.get(obj);
+        int newX1 = initialPosition.x + deltaX;
+        int newY1 = initialPosition.y + deltaY;
+        int newX2 = newX1 + obj.getWidth();
+        int newY2 = newY1 + obj.getHeight();
+
+        obj.resize(newX1, newY1, newX2, newY2);
+      }
+    }
+
     public void reset() {
       this.dragType = DragType.NONE;
       this.activeHandle = null;
+      this.activeObject = null;
       this.initialMousePoint = null;
       this.initialObjectPositions.clear();
     }
@@ -202,11 +261,5 @@ public class CanvasView extends JPanel {
     public boolean isDragging() {
       return dragType != DragType.NONE;
     }
-  }
-
-  private enum DragType {
-    HANDLE,
-    OBJECT,
-    NONE
   }
 }

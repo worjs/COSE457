@@ -1,15 +1,15 @@
 package cose457.model.object;
 
+import cose457.model.canvas.Handle;
+import cose457.model.canvas.HandleType;
+import cose457.model.canvas.ObjectSelection;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
-
-import cose457.model.canvas.Handle;
-import cose457.model.canvas.HandleType;
-import cose457.model.canvas.ObjectSelection;
 import lombok.Getter;
 
 @Getter
@@ -140,4 +140,9 @@ public abstract class DrawbleObject {
     this.z = z;
     pcs.firePropertyChange("z", oldZ, this.z);
   }
+
+  public Rectangle getBounds() {
+    return new Rectangle(this.getX1(), this.getY1(), this.getWidth(), this.getHeight());
+  }
+
 }

@@ -1,18 +1,31 @@
 package cose457.view;
 
+import cose457.controller.CanvasController;
 import cose457.model.canvas.ObjectSelection;
 import cose457.model.canvas.SelectionListener;
 import cose457.model.object.DrawbleObject;
-import cose457.controller.CanvasController;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JColorChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 public class RightSideBar extends JPanel implements SelectionListener {
+
   private JTextField widthField, heightField, xposField, yposField, zposField;
   private JButton colorButton;
   private JLabel colorCodeLabel;
@@ -20,11 +33,20 @@ public class RightSideBar extends JPanel implements SelectionListener {
   private ObjectSelection selection;
   private CanvasController controller;
 
-  private DrawbleObject currentObject; // 현재 선택된 객체를 저장
+  private DrawbleObject currentObject; // Currently selected object
+  private PropertyChangeListener objectPropertyListener =
+      new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (currentObject != null) {
+            SwingUtilities.invokeLater(() -> updateFields(currentObject));
+          }
+        }
+      };
 
   public RightSideBar(CanvasController controller) {
     this.controller = controller;
-    selection = ObjectSelection.getInstance();
+    selection = controller.getState().getSelections();
     selection.addSelectionListener(this);
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -53,14 +75,14 @@ public class RightSideBar extends JPanel implements SelectionListener {
     colorButton.setMaximumSize(new Dimension(120, 30));
     colorButton.addActionListener(
         e -> {
-          Color color = JColorChooser.showDialog(null, "Choose a color", selectedColor);
-          if (color != null) {
-            selectedColor = color;
-            colorButton.setBackground(selectedColor);
-            updateColorCodeLabel();
-            if (currentObject != null) {
-              currentObject.setColor(selectedColor);
-              controller.getView().repaint();
+          if (currentObject != null) {
+            Color color = JColorChooser.showDialog(null, "Choose a color", selectedColor);
+            if (color != null) {
+              selectedColor = color;
+              colorButton.setBackground(selectedColor);
+              updateColorCodeLabel();
+              // Change color through controller
+              controller.changeColor(Arrays.asList(currentObject), selectedColor);
             }
           }
         });
@@ -88,12 +110,13 @@ public class RightSideBar extends JPanel implements SelectionListener {
               int xpos = Integer.parseInt(xposField.getText());
               int ypos = Integer.parseInt(yposField.getText());
 
-              int x2 = xpos + width;
-              int y2 = ypos + height;
-              currentObject.resize(xpos, ypos, x2, y2);
+              Map<DrawbleObject, Rectangle> newBounds = new HashMap<>();
+              newBounds.put(currentObject, new Rectangle(xpos, ypos, width, height));
+              // Resize through controller
+              controller.resizeObjects(Arrays.asList(currentObject), newBounds);
               controller.getView().repaint();
             } catch (NumberFormatException ex) {
-              // 잘못된 입력 처리
+              // Handle invalid input
             }
           }
         };
@@ -102,8 +125,19 @@ public class RightSideBar extends JPanel implements SelectionListener {
     heightField.addActionListener(fieldListener);
     xposField.addActionListener(fieldListener);
     yposField.addActionListener(fieldListener);
-    zposField.addActionListener(fieldListener);
-    // zposField에 대한 처리 필요 시 추가
+    zposField.addActionListener(
+        e -> {
+          if (currentObject != null) {
+            try {
+              int zpos = Integer.parseInt(zposField.getText());
+              // Change Z-Order through controller
+              controller.changeZOrder(Arrays.asList(currentObject), zpos);
+              controller.getView().repaint();
+            } catch (NumberFormatException ex) {
+              // Handle invalid input
+            }
+          }
+        });
   }
 
   private JPanel createLabeledFieldWithButtons(String labelText, JTextField field) {
@@ -144,21 +178,12 @@ public class RightSideBar extends JPanel implements SelectionListener {
     try {
       int currentValue = Integer.parseInt(field.getText());
       field.setText(String.valueOf(currentValue + adjustment));
-      if (currentObject != null) {
-        int width = Integer.parseInt(widthField.getText());
-        int height = Integer.parseInt(heightField.getText());
-        int xpos = Integer.parseInt(xposField.getText());
-        int ypos = Integer.parseInt(yposField.getText());
-        int zpos = Integer.parseInt(zposField.getText());
-
-        int x2 = xpos + width;
-        int y2 = ypos + height;
-        currentObject.resize(xpos, ypos, x2, y2);
-        currentObject.setZ(zpos); // z값 업데이트
-        controller.getView().repaint();
+      // Trigger field listener manually
+      for (ActionListener listener : field.getActionListeners()) {
+        listener.actionPerformed(null);
       }
     } catch (NumberFormatException e) {
-      // 잘못된 입력 처리
+      // Handle invalid input
     }
   }
 
@@ -204,8 +229,8 @@ public class RightSideBar extends JPanel implements SelectionListener {
 
     int brightness =
         (selectedColor.getRed() * 299
-                + selectedColor.getGreen() * 587
-                + selectedColor.getBlue() * 114)
+            + selectedColor.getGreen() * 587
+            + selectedColor.getBlue() * 114)
             / 1000;
     colorCodeLabel.setForeground(brightness > 125 ? Color.BLACK : Color.WHITE);
   }
@@ -229,14 +254,4 @@ public class RightSideBar extends JPanel implements SelectionListener {
       enableFields(false);
     }
   }
-
-  private PropertyChangeListener objectPropertyListener =
-      new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (currentObject != null) {
-            SwingUtilities.invokeLater(() -> updateFields(currentObject));
-          }
-        }
-      };
 }
