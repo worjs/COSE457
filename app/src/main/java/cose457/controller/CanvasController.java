@@ -1,9 +1,8 @@
 package cose457.controller;
 
 import cose457.model.canvas.CanvasState;
-import cose457.model.canvas.ObjectSelection;
 import cose457.model.factory.interfaces.ObjectFactory;
-import cose457.model.object.Object;
+import cose457.model.object.DrawbleObject;
 import cose457.view.CanvasView;
 import lombok.Getter;
 
@@ -20,7 +19,7 @@ public class CanvasController {
 
   public void addObjects(ObjectFactory factory) {
     int nextZ = state.getNextZ();
-    Object obj = factory.createObject(100, 100, 300, 200, nextZ, Color.RED);
+    DrawbleObject obj = factory.createObject(100, 100, 300, 200, nextZ, Color.RED);
     this.state.addObjects(obj);
     view.repaint();
   }

@@ -7,7 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 @Getter
-public class TextObject extends Object {
+public class TextObject extends DrawbleObject {
 
   @Setter private String text;
 

@@ -2,7 +2,7 @@ package cose457.view;
 
 import cose457.model.canvas.ObjectSelection;
 import cose457.model.canvas.SelectionListener;
-import cose457.model.object.Object;
+import cose457.model.object.DrawbleObject;
 import cose457.controller.CanvasController;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ public class RightSideBar extends JPanel implements SelectionListener {
   private ObjectSelection selection;
   private CanvasController controller;
 
-  private Object currentObject; // 현재 선택된 객체를 저장
+  private DrawbleObject currentObject; // 현재 선택된 객체를 저장
 
   public RightSideBar(CanvasController controller) {
     this.controller = controller;
@@ -162,7 +162,7 @@ public class RightSideBar extends JPanel implements SelectionListener {
     }
   }
 
-  public void updateFields(Object obj) {
+  public void updateFields(DrawbleObject obj) {
     widthField.setText(String.valueOf(obj.getWidth()));
     heightField.setText(String.valueOf(obj.getHeight()));
     xposField.setText(String.valueOf(obj.getX1()));
@@ -212,7 +212,7 @@ public class RightSideBar extends JPanel implements SelectionListener {
 
   @Override
   public void selectionChanged() {
-    List<Object> selectedObjects = selection.getSelectedObjects();
+    List<DrawbleObject> selectedObjects = selection.getSelectedObjects();
     if (selectedObjects.size() == 1) {
       if (currentObject != null) {
         currentObject.removePropertyChangeListener(objectPropertyListener);

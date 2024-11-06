@@ -13,7 +13,7 @@ import cose457.model.canvas.ObjectSelection;
 import lombok.Getter;
 
 @Getter
-public abstract class Object {
+public abstract class DrawbleObject {
 
   private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
   protected int x1, y1, x2, y2, z;
@@ -21,7 +21,7 @@ public abstract class Object {
   protected double rotationAngle = 0.0;
   private List<Handle> handles;
 
-  protected Object(int x1, int y1, int x2, int y2, int z, Color color) {
+  protected DrawbleObject(int x1, int y1, int x2, int y2, int z, Color color) {
     this.color = color;
     this.x1 = x1;
     this.x2 = x2;

@@ -1,12 +1,12 @@
 package cose457.model.canvas;
 
-import cose457.model.object.Object;
+import cose457.model.object.DrawbleObject;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectSelection {
   private static ObjectSelection instance;
-  private ArrayList<Object> selectedObjects = new ArrayList<>();
+  private ArrayList<DrawbleObject> selectedObjects = new ArrayList<>();
   private List<SelectionListener> listeners = new ArrayList<>();
 
   public static ObjectSelection getInstance() {
@@ -16,12 +16,12 @@ public class ObjectSelection {
     return instance;
   }
 
-  public void selectObject(Object object) {
+  public void selectObject(DrawbleObject object) {
     selectedObjects.add(object);
     notifySelectionChanged();
   }
 
-  public void unselectObject(Object object) {
+  public void unselectObject(DrawbleObject object) {
     selectedObjects.remove(object);
     notifySelectionChanged();
   }
@@ -31,7 +31,7 @@ public class ObjectSelection {
     notifySelectionChanged();
   }
 
-  public List<Object> getSelectedObjects() {
+  public List<DrawbleObject> getSelectedObjects() {
     return selectedObjects;
   }
 

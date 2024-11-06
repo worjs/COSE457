@@ -1,7 +1,6 @@
 package cose457.model.canvas;
 
-import cose457.model.object.Object;
-import lombok.Getter;
+import cose457.model.object.DrawbleObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -10,27 +9,27 @@ import java.util.stream.Collectors;
 
 public class CanvasState {
 
-  private final List<Object> objectList = new ArrayList<>();
+  private final List<DrawbleObject> objectList = new ArrayList<>();
 
   public ObjectSelection getSelections() {
     return ObjectSelection.getInstance();
   }
 
-  public List<Object> getObjectList() {
+  public List<DrawbleObject> getObjectList() {
     return objectList.stream()
-        .sorted(Comparator.comparingInt(Object::getZ))
+        .sorted(Comparator.comparingInt(DrawbleObject::getZ))
         .collect(Collectors.toList());
   }
 
   public int getNextZ() {
-    return objectList.stream().mapToInt(Object::getZ).max().orElse(0) + 1;
+    return objectList.stream().mapToInt(DrawbleObject::getZ).max().orElse(0) + 1;
   }
 
-  public void addObjects(Object object) {
+  public void addObjects(DrawbleObject object) {
     objectList.add(object);
   }
 
-  public void removeObjects(Object object) {
+  public void removeObjects(DrawbleObject object) {
     objectList.remove(object);
   }
 }

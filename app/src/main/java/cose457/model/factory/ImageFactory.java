@@ -5,7 +5,7 @@ import java.awt.Image;
 
 import cose457.model.factory.interfaces.ObjectFactory;
 import cose457.model.object.ImageObject;
-import cose457.model.object.Object;
+import cose457.model.object.DrawbleObject;
 
 public class ImageFactory implements ObjectFactory {
   private static ImageFactory instance;
@@ -25,7 +25,7 @@ public class ImageFactory implements ObjectFactory {
   }
 
   @Override
-  public Object createObject(int x1, int y1, int x2, int y2, int z, Color color) {
+  public DrawbleObject createObject(int x1, int y1, int x2, int y2, int z, Color color) {
     return new ImageObject(x1, y1, x2, y2, z, color, image);
   }
 }

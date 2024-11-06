@@ -2,8 +2,7 @@ package cose457.view;
 
 import cose457.model.canvas.CanvasState;
 import cose457.model.canvas.Handle;
-import cose457.model.canvas.ObjectSelection;
-import cose457.model.object.Object;
+import cose457.model.object.DrawbleObject;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -56,7 +55,7 @@ public class CanvasView extends JPanel {
     // 2. 선택된 객체 자체를 클릭했는지 확인합니다.
     if (selectObjectIfClicked(x, y)) {
       // 객체 드래그를 시작합니다.
-      List<Object> selectedObjects = state.getSelections().getSelectedObjects();
+      List<DrawbleObject> selectedObjects = state.getSelections().getSelectedObjects();
       dragState.startObjectDrag(e.getPoint(), selectedObjects);
       return;
     }
@@ -75,7 +74,7 @@ public class CanvasView extends JPanel {
       return false;
     }
 
-    for (Object obj : state.getObjectList()) {
+    for (DrawbleObject obj : state.getObjectList()) {
       if (obj.isSelected()) {
         Handle handle = obj.getClickedHandle(x, y);
         if (handle != null) {
@@ -88,7 +87,7 @@ public class CanvasView extends JPanel {
   }
 
   private boolean selectObjectIfClicked(int x, int y) {
-    for (Object obj : state.getSelections().getSelectedObjects()) {
+    for (DrawbleObject obj : state.getSelections().getSelectedObjects()) {
       if (obj.containsPoint(x, y)) {
         return true;
       }
@@ -97,16 +96,16 @@ public class CanvasView extends JPanel {
   }
 
   private boolean selectObjectAtPoint(int x, int y, boolean isShiftDown) {
-    List<Object> objectsAtPoint = new ArrayList<>();
-    for (Object obj : state.getObjectList()) {
+    List<DrawbleObject> objectsAtPoint = new ArrayList<>();
+    for (DrawbleObject obj : state.getObjectList()) {
       if (obj.containsPoint(x, y)) {
         objectsAtPoint.add(obj);
       }
     }
 
     if (!objectsAtPoint.isEmpty()) {
-      Object topMostObject =
-          objectsAtPoint.stream().max(Comparator.comparingInt(Object::getZ)).get();
+      DrawbleObject topMostObject =
+          objectsAtPoint.stream().max(Comparator.comparingInt(DrawbleObject::getZ)).get();
 
       if (isShiftDown) {
         toggleObjectSelection(topMostObject);
@@ -119,7 +118,7 @@ public class CanvasView extends JPanel {
     return false;
   }
 
-  private void toggleObjectSelection(Object obj) {
+  private void toggleObjectSelection(DrawbleObject obj) {
     if (obj.isSelected()) {
       state.getSelections().unselectObject(obj);
     } else {
@@ -132,7 +131,7 @@ public class CanvasView extends JPanel {
       switch (dragState.getDragType()) {
         case HANDLE:
           // 핸들 드래그 처리
-          for (Object obj : state.getObjectList()) {
+          for (DrawbleObject obj : state.getObjectList()) {
             if (obj.isSelected()) {
               obj.resizeOrRotate(dragState.getActiveHandle(), e.getX(), e.getY());
             }
@@ -143,7 +142,7 @@ public class CanvasView extends JPanel {
           int deltaX = e.getX() - dragState.getInitialMousePoint().x;
           int deltaY = e.getY() - dragState.getInitialMousePoint().y;
 
-          for (Object obj : state.getSelections().getSelectedObjects()) {
+          for (DrawbleObject obj : state.getSelections().getSelectedObjects()) {
             Point initialPosition = dragState.getInitialObjectPositions().get(obj);
             if (initialPosition != null) {
               int newX1 = initialPosition.x + deltaX;
@@ -165,7 +164,7 @@ public class CanvasView extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    for (Object obj : state.getObjectList()) {
+    for (DrawbleObject obj : state.getObjectList()) {
       obj.draw((Graphics2D) g);
       if (obj.isSelected()) {
         obj.drawHandles((Graphics2D) g);
@@ -178,17 +177,17 @@ public class CanvasView extends JPanel {
     private DragType dragType = DragType.NONE;
     private Handle activeHandle = null;
     private Point initialMousePoint = null;
-    private Map<Object, Point> initialObjectPositions = new HashMap<>();
+    private Map<DrawbleObject, Point> initialObjectPositions = new HashMap<>();
 
     public void startHandleDrag(Handle handle) {
       this.dragType = DragType.HANDLE;
       this.activeHandle = handle;
     }
 
-    public void startObjectDrag(Point initialPoint, List<Object> selectedObjects) {
+    public void startObjectDrag(Point initialPoint, List<DrawbleObject> selectedObjects) {
       this.dragType = DragType.OBJECT;
       this.initialMousePoint = initialPoint;
-      for (Object obj : selectedObjects) {
+      for (DrawbleObject obj : selectedObjects) {
         initialObjectPositions.put(obj, new Point(obj.getX1(), obj.getY1()));
       }
     }

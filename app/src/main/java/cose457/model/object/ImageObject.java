@@ -6,7 +6,7 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Graphics2D;
 
-public class ImageObject extends Object {
+public class ImageObject extends DrawbleObject {
 
   @Setter private Image image;
 
