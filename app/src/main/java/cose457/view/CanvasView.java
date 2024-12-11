@@ -171,11 +171,21 @@ public class CanvasView extends JPanel {
           CommandInvoker.getInstance().executeCommand(resizeCommand);
           break;
         case OBJECT:
-          // Execute MoveCommand
+          // 마우스를 놓았을 때 한 번만 MoveCommand 실행
           int deltaX = e.getX() - dragState.getInitialMousePoint().x;
           int deltaY = e.getY() - dragState.getInitialMousePoint().y;
-          MoveCommand moveCommand = new MoveCommand(this,
-              new ArrayList<>(dragState.getInitialObjectPositions().keySet()), deltaX, deltaY);
+          List<DrawbleObject> objectsToMove = new ArrayList<>(dragState.getInitialObjectPositions().keySet());
+          
+          // 객체들의 위치를 원래 위치로 되돌림
+          for (DrawbleObject obj : objectsToMove) {
+            Point initialPos = dragState.getInitialObjectPositions().get(obj);
+            obj.resize(initialPos.x, initialPos.y, 
+                      initialPos.x + obj.getWidth(), 
+                      initialPos.y + obj.getHeight());
+          }
+          
+          // MoveCommand를 통해 한 번만 이동 적용
+          MoveCommand moveCommand = new MoveCommand(this, objectsToMove, deltaX, deltaY);
           CommandInvoker.getInstance().executeCommand(moveCommand);
           break;
         default:
@@ -243,10 +253,11 @@ public class CanvasView extends JPanel {
         Point initialPosition = initialObjectPositions.get(obj);
         int newX1 = initialPosition.x + deltaX;
         int newY1 = initialPosition.y + deltaY;
-        int newX2 = newX1 + obj.getWidth();
-        int newY2 = newY1 + obj.getHeight();
-
-        obj.resize(newX1, newY1, newX2, newY2);
+        int width = obj.getWidth();
+        int height = obj.getHeight();
+        
+        // 드래그 중에는 임시로 위치만 업데이트하고 MoveCommand는 실행하지 않음
+        obj.resize(newX1, newY1, newX1 + width, newY1 + height);
       }
     }
 
