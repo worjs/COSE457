@@ -13,7 +13,7 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public abstract class DrawbleObject {
+public abstract class DrawbleObject implements DrawbleComponent {
 
   private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
   protected int x1, y1, x2, y2, z;
@@ -143,6 +143,26 @@ public abstract class DrawbleObject {
 
   public Rectangle getBounds() {
     return new Rectangle(this.getX1(), this.getY1(), this.getWidth(), this.getHeight());
+  }
+
+  @Override
+  public void add(DrawbleComponent component) {
+    throw new UnsupportedOperationException("Leaf node cannot add components");
+  }
+
+  @Override
+  public void remove(DrawbleComponent component) {
+    throw new UnsupportedOperationException("Leaf node cannot remove components");
+  }
+
+  @Override
+  public DrawbleComponent getChild(int index) {
+    throw new UnsupportedOperationException("Leaf node cannot get child");
+  }
+
+  @Override
+  public void move(int dx, int dy) {
+    resize(x1 + dx, y1 + dy, x2 + dx, y2 + dy);
   }
 
 }
