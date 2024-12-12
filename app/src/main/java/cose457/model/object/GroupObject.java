@@ -1,62 +1,71 @@
 package cose457.model.object;
 
-import java.awt.Graphics2D;
 import java.awt.Color;
-import java.util.ArrayList;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.util.List;
+import lombok.Getter;
 
-public class GroupObject implements DrawbleComponent {
-    private List<DrawbleComponent> children = new ArrayList<>();
-    private Color color;
+@Getter
+public class GroupObject extends DrawbleObject {
+    private final List<DrawbleObject> groupedObjects;
+
+    public GroupObject(List<DrawbleObject> objects, int z) {
+        super(
+            calculateBounds(objects).x,
+            calculateBounds(objects).y,
+            calculateBounds(objects).x + calculateBounds(objects).width,
+            calculateBounds(objects).y + calculateBounds(objects).height,
+            z,
+            Color.BLACK
+        );
+        this.groupedObjects = objects;
+    }
+
+    private static Rectangle calculateBounds(List<DrawbleObject> objects) {
+        if (objects.isEmpty()) {
+            return new Rectangle(0, 0, 0, 0);
+        }
+
+        Rectangle bounds = objects.get(0).getBounds();
+        for (int i = 1; i < objects.size(); i++) {
+            bounds = bounds.union(objects.get(i).getBounds());
+        }
+        return bounds;
+    }
 
     @Override
     public void draw(Graphics2D g2d) {
-        for (DrawbleComponent child : children) {
-            child.draw(g2d);
+        // 그룹 내의 모든 객체를 그림
+        for (DrawbleObject obj : groupedObjects) {
+            obj.draw(g2d);
+        }
+        
+        // 그룹의 경계를 점선으로 표시
+        if (isSelected()) {
+            g2d.setColor(Color.BLUE);
+            float[] dash = {5.0f};
+            g2d.setStroke(new java.awt.BasicStroke(1.0f, java.awt.BasicStroke.CAP_BUTT,
+                    java.awt.BasicStroke.JOIN_MITER, 10.0f, dash, 0.0f));
+            g2d.drawRect(x1, y1, x2 - x1, y2 - y1);
         }
     }
 
     @Override
-    public void move(int dx, int dy) {
-        for (DrawbleComponent child : children) {
-            child.move(dx, dy);
+    public void resize(int newX1, int newY1, int newX2, int newY2) {
+        int deltaX = newX1 - x1;
+        int deltaY = newY1 - y1;
+        
+        // 모든 그룹 객체를 같이 이동
+        for (DrawbleObject obj : groupedObjects) {
+            obj.resize(
+                obj.getX1() + deltaX,
+                obj.getY1() + deltaY,
+                obj.getX2() + deltaX,
+                obj.getY2() + deltaY
+            );
         }
-    }
-
-    @Override
-    public void setColor(Color color) {
-        this.color = color;
-        for (DrawbleComponent child : children) {
-            child.setColor(color);
-        }
-    }
-
-    @Override
-    public boolean containsPoint(int x, int y) {
-        for (DrawbleComponent child : children) {
-            if (child.containsPoint(x, y)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public void add(DrawbleComponent component) {
-        children.add(component);
-    }
-
-    @Override
-    public void remove(DrawbleComponent component) {
-        children.remove(component);
-    }
-
-    @Override
-    public DrawbleComponent getChild(int index) {
-        return children.get(index);
-    }
-
-    public List<DrawbleComponent> getChildren() {
-        return new ArrayList<>(children);
+        
+        super.resize(newX1, newY1, newX2, newY2);
     }
 } 

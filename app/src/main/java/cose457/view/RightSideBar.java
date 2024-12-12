@@ -124,6 +124,13 @@ public class RightSideBar extends JPanel implements SelectionListener {
     enableFields(false);
 
     addFieldListeners();
+
+    // 그룹화 버튼 추가
+    JButton groupButton = new JButton("Group");
+    groupButton.addActionListener(e -> {
+      controller.groupSelectedObjects();
+    });
+    add(groupButton);
   }
 
   private void addFieldListeners() {

@@ -4,6 +4,7 @@ import cose457.controller.command.CommandInvoker;
 import cose457.controller.command.MoveCommand;
 import cose457.controller.command.ResizeCommand;
 import cose457.controller.command.SelectCommand;
+import cose457.controller.command.GroupCommand;
 import cose457.model.canvas.CanvasState;
 import cose457.model.canvas.Handle;
 import cose457.model.object.DrawbleObject;
@@ -202,6 +203,13 @@ public class CanvasView extends JPanel {
           break;
       }
       dragState.reset();
+    }
+  }
+
+  public void groupSelectedObjects() {
+    List<DrawbleObject> selectedObjects = new ArrayList<>(state.getSelections().getSelectedObjects());
+    if (selectedObjects.size() > 1) {
+      CommandInvoker.getInstance().executeCommand(new GroupCommand(this, selectedObjects));
     }
   }
 

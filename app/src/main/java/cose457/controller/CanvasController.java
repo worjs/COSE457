@@ -16,6 +16,7 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import cose457.controller.command.GroupCommand;
 
 public class CanvasController {
 
@@ -73,5 +74,12 @@ public class CanvasController {
   public void changeZOrder(List<DrawbleObject> objects, int zOrder) {
     CommandInvoker.getInstance()
         .executeCommand(new ChangeZOrderCommand(view, objects, zOrder));
+  }
+
+public void groupSelectedObjects() {
+    List<DrawbleObject> selectedObjects = state.getSelections().getSelectedObjects();
+    if (selectedObjects.size() > 1) {
+      CommandInvoker.getInstance().executeCommand(new GroupCommand(view, selectedObjects));
+    }
   }
 }
