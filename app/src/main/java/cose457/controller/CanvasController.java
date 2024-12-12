@@ -7,6 +7,7 @@ import cose457.controller.command.DrawCommand;
 import cose457.controller.command.MoveCommand;
 import cose457.controller.command.ResizeCommand;
 import cose457.controller.command.SelectCommand;
+import cose457.controller.command.UngroupCommand;
 import cose457.model.canvas.CanvasState;
 import cose457.model.factory.interfaces.ObjectFactory;
 import cose457.model.object.DrawbleObject;
@@ -80,6 +81,13 @@ public void groupSelectedObjects() {
     List<DrawbleObject> selectedObjects = state.getSelections().getSelectedObjects();
     if (selectedObjects.size() > 1) {
       CommandInvoker.getInstance().executeCommand(new GroupCommand(view, selectedObjects));
+    }
+  }
+
+  public void ungroupSelectedObjects() {
+    List<DrawbleObject> selectedObjects = state.getSelections().getSelectedObjects();
+    if (!selectedObjects.isEmpty()) {
+      CommandInvoker.getInstance().executeCommand(new UngroupCommand(view, selectedObjects));
     }
   }
 }

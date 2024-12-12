@@ -125,12 +125,28 @@ public class RightSideBar extends JPanel implements SelectionListener {
 
     addFieldListeners();
 
-    // 그룹화 버튼 추가
+    // 그룹 관련 버튼들을 담을 패널
+    JPanel groupPanel = new JPanel();
+    groupPanel.setLayout(new BoxLayout(groupPanel, BoxLayout.X_AXIS));
+    groupPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+    // 그룹화 버튼
     JButton groupButton = new JButton("Group");
     groupButton.addActionListener(e -> {
       controller.groupSelectedObjects();
     });
-    add(groupButton);
+    
+    // 그룹 해제 버튼
+    JButton ungroupButton = new JButton("Ungroup");
+    ungroupButton.addActionListener(e -> {
+      controller.ungroupSelectedObjects();
+    });
+
+    groupPanel.add(groupButton);
+    groupPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+    groupPanel.add(ungroupButton);
+    
+    add(groupPanel);
   }
 
   private void addFieldListeners() {
