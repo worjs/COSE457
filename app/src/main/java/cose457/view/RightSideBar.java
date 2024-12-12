@@ -4,6 +4,7 @@ import cose457.controller.CanvasController;
 import cose457.model.canvas.ObjectSelection;
 import cose457.model.canvas.SelectionListener;
 import cose457.model.object.DrawbleObject;
+import cose457.controller.command.CommandInvoker;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -51,6 +52,17 @@ public class RightSideBar extends JPanel implements SelectionListener {
 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setPreferredSize(new Dimension(200, getHeight()));
+
+    // Add Undo button at the top
+    JButton undoButton = new JButton("Undo");
+    undoButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+    undoButton.setMaximumSize(new Dimension(120, 30));
+    undoButton.addActionListener(e -> {
+      CommandInvoker.getInstance().undo();
+      controller.getView().repaint();
+    });
+    add(undoButton);
+    add(Box.createRigidArea(new Dimension(0, 10)));
 
     widthField = new JTextField(10);
     heightField = new JTextField(10);
