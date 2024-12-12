@@ -53,15 +53,29 @@ public class RightSideBar extends JPanel implements SelectionListener {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setPreferredSize(new Dimension(200, getHeight()));
 
-    // Add Undo button at the top
+    // Add Undo/Redo buttons at the top
+    JPanel undoRedoPanel = new JPanel();
+    undoRedoPanel.setLayout(new BoxLayout(undoRedoPanel, BoxLayout.X_AXIS));
+    undoRedoPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    undoRedoPanel.setMaximumSize(new Dimension(200, 30));
+
     JButton undoButton = new JButton("Undo");
-    undoButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-    undoButton.setMaximumSize(new Dimension(120, 30));
     undoButton.addActionListener(e -> {
       CommandInvoker.getInstance().undo();
       controller.getView().repaint();
     });
-    add(undoButton);
+    
+    JButton redoButton = new JButton("Redo");
+    redoButton.addActionListener(e -> {
+      CommandInvoker.getInstance().redo();
+      controller.getView().repaint();
+    });
+
+    undoRedoPanel.add(undoButton);
+    undoRedoPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+    undoRedoPanel.add(redoButton);
+    
+    add(undoRedoPanel);
     add(Box.createRigidArea(new Dimension(0, 10)));
 
     widthField = new JTextField(10);
@@ -116,20 +130,7 @@ public class RightSideBar extends JPanel implements SelectionListener {
     ActionListener fieldListener =
         e -> {
           if (currentObject != null) {
-            try {
-              int width = Integer.parseInt(widthField.getText());
-              int height = Integer.parseInt(heightField.getText());
-              int xpos = Integer.parseInt(xposField.getText());
-              int ypos = Integer.parseInt(yposField.getText());
-
-              Map<DrawbleObject, Rectangle> newBounds = new HashMap<>();
-              newBounds.put(currentObject, new Rectangle(xpos, ypos, width, height));
-              // Resize through controller
-              controller.resizeObjects(Arrays.asList(currentObject), newBounds);
-              controller.getView().repaint();
-            } catch (NumberFormatException ex) {
-              // Handle invalid input
-            }
+            applyResize();
           }
         };
 
@@ -142,7 +143,6 @@ public class RightSideBar extends JPanel implements SelectionListener {
           if (currentObject != null) {
             try {
               int zpos = Integer.parseInt(zposField.getText());
-              // Change Z-Order through controller
               controller.changeZOrder(Arrays.asList(currentObject), zpos);
               controller.getView().repaint();
             } catch (NumberFormatException ex) {
@@ -150,6 +150,34 @@ public class RightSideBar extends JPanel implements SelectionListener {
             }
           }
         });
+  }
+
+  private void adjustValue(JTextField field, int adjustment) {
+    try {
+      int currentValue = Integer.parseInt(field.getText());
+      field.setText(String.valueOf(currentValue + adjustment));
+      if (currentObject != null) {
+        applyResize();
+      }
+    } catch (NumberFormatException e) {
+      // Handle invalid input
+    }
+  }
+
+  private void applyResize() {
+    try {
+      int width = Integer.parseInt(widthField.getText());
+      int height = Integer.parseInt(heightField.getText());
+      int xpos = Integer.parseInt(xposField.getText());
+      int ypos = Integer.parseInt(yposField.getText());
+
+      Map<DrawbleObject, Rectangle> newBounds = new HashMap<>();
+      newBounds.put(currentObject, new Rectangle(xpos, ypos, width, height));
+      controller.resizeObjects(Arrays.asList(currentObject), newBounds);
+      controller.getView().repaint();
+    } catch (NumberFormatException ex) {
+      // Handle invalid input
+    }
   }
 
   private JPanel createLabeledFieldWithButtons(String labelText, JTextField field) {
@@ -184,19 +212,6 @@ public class RightSideBar extends JPanel implements SelectionListener {
     panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     return panel;
-  }
-
-  private void adjustValue(JTextField field, int adjustment) {
-    try {
-      int currentValue = Integer.parseInt(field.getText());
-      field.setText(String.valueOf(currentValue + adjustment));
-      // Trigger field listener manually
-      for (ActionListener listener : field.getActionListeners()) {
-        listener.actionPerformed(null);
-      }
-    } catch (NumberFormatException e) {
-      // Handle invalid input
-    }
   }
 
   public void updateFields(DrawbleObject obj) {

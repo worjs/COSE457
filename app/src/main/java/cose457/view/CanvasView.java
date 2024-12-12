@@ -164,10 +164,20 @@ public class CanvasView extends JPanel {
     if (dragState.isDragging()) {
       switch (dragState.getDragType()) {
         case HANDLE:
-          // Execute ResizeCommand
+          // 원래 위치로 되돌린 후 ResizeCommand 실행
+          DrawbleObject obj = dragState.getActiveObject();
+          Rectangle initialBounds = dragState.getInitialBounds();
+          Rectangle finalBounds = obj.getBounds();
+          
+          // 객체를 원래 위치로 되돌림
+          obj.resize(initialBounds.x, initialBounds.y,
+                    initialBounds.x + initialBounds.width,
+                    initialBounds.y + initialBounds.height);
+          
+          // ResizeCommand를 통해 최종 위치로 이동
           Map<DrawbleObject, Rectangle> newBounds = new HashMap<>();
-          newBounds.put(dragState.getActiveObject(), dragState.getActiveObject().getBounds());
-          ResizeCommand resizeCommand = new ResizeCommand(this, Arrays.asList(dragState.getActiveObject()), newBounds);
+          newBounds.put(obj, finalBounds);
+          ResizeCommand resizeCommand = new ResizeCommand(this, Arrays.asList(obj), newBounds);
           CommandInvoker.getInstance().executeCommand(resizeCommand);
           break;
         case OBJECT:
@@ -177,11 +187,11 @@ public class CanvasView extends JPanel {
           List<DrawbleObject> objectsToMove = new ArrayList<>(dragState.getInitialObjectPositions().keySet());
           
           // 객체들의 위치를 원래 위치로 되돌림
-          for (DrawbleObject obj : objectsToMove) {
-            Point initialPos = dragState.getInitialObjectPositions().get(obj);
-            obj.resize(initialPos.x, initialPos.y, 
-                      initialPos.x + obj.getWidth(), 
-                      initialPos.y + obj.getHeight());
+          for (DrawbleObject obje : objectsToMove) {
+            Point initialPos = dragState.getInitialObjectPositions().get(obje);
+            obje.resize(initialPos.x, initialPos.y, 
+                      initialPos.x + obje.getWidth(), 
+                      initialPos.y + obje.getHeight());
           }
           
           // MoveCommand를 통해 한 번만 이동 적용
@@ -223,16 +233,22 @@ public class CanvasView extends JPanel {
     private DrawbleObject activeObject = null;
     private Point initialMousePoint = null;
     private Map<DrawbleObject, Point> initialObjectPositions = new HashMap<>();
+    private Rectangle initialBounds = null;
 
     public void startHandleDrag(Handle handle, DrawbleObject obj) {
       this.dragType = DragType.HANDLE;
       this.activeHandle = handle;
       this.activeObject = obj;
-      // Store initial bounds if needed for undo functionality
+      // 초기 크기와 위치 저장
+      this.initialBounds = new Rectangle(
+          obj.getX1(), obj.getY1(),
+          obj.getWidth(), obj.getHeight()
+      );
     }
 
     public void updateHandleDrag(int x, int y) {
       if (activeObject != null && activeHandle != null) {
+        // 임시로 크기 변경 (시각적 피드백용)
         activeObject.resizeOrRotate(activeHandle, x, y);
       }
     }
@@ -262,15 +278,20 @@ public class CanvasView extends JPanel {
     }
 
     public void reset() {
-      this.dragType = DragType.NONE;
-      this.activeHandle = null;
-      this.activeObject = null;
-      this.initialMousePoint = null;
-      this.initialObjectPositions.clear();
+      dragType = DragType.NONE;
+      activeHandle = null;
+      activeObject = null;
+      initialMousePoint = null;
+      initialObjectPositions.clear();
+      initialBounds = null;
     }
 
     public boolean isDragging() {
       return dragType != DragType.NONE;
+    }
+
+    public Rectangle getInitialBounds() {
+      return initialBounds;
     }
   }
 }
